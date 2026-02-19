@@ -12,9 +12,6 @@ using namespace httpserv;
 void Request::Parse(const char* req){
     if(!req) return;
 
-    const std::string strReq(req);
-    fullRequest = strReq;
-
     size_t methodEnd = fullRequest.find(' ');
     if(methodEnd != std::string::npos){
         method = fullRequest.substr(0, methodEnd);
@@ -61,15 +58,11 @@ void Request::Parse(const char* req){
     std::cout << "method: " << method << "\npath: " << path << "\nbody\n{" << body << "\n}\n" << std::endl;
 }
 
-void Response::BuildRes(
-    const std::string& cors,
-    const std::string& type,
-    const std::string& body,
-    const uint16_t status
-){
-    SetCors(cors);
-    SetContent(body, type);
-    SetStatus(status);
+void Request::Clear(){
+    method = "";
+    path = "";
+    body = "";
+    fullRequest = "";
 }
 
 std::string Response::GetFullResponse(){
@@ -93,18 +86,21 @@ std::string Response::GetFullResponse(){
     return fullRes;
 }
 
+void Response::Clear(){
+    body = "";
+    status = 500;
+    headers.clear();
+}
+
 void Response::SetHeader(const std::string& name, const std::string& val){
     headers[name] = val;
 }
 
-void Response::SetCors(const std::string& _cors){
-    cors = _cors;
-}
 void Response::SetStatus(const uint16_t _status){
     status = _status;
 }
 void Response::SetContent(const std::string& _body, const std::string& _type){
-    type = _type;
+    SetHeader("Content-Type", _type);
     body = _body;
 }
 
@@ -147,6 +143,10 @@ bool Server::Accept(){
             clientSocket = accept(mainSocket, NULL, NULL);
         }
         std::cout << "Client connected" << std::endl;
+
+        req.Clear();
+        res.Clear();
+
         if(!HandleConnection()){
             return false;
         }
@@ -191,18 +191,50 @@ bool Server::InitSocketAPI(){
 
 bool Server::HandleConnection(){
     int bytesRecv;
-    char bufferRecv[4096] = {0};
-    bytesRecv = recv(clientSocket, bufferRecv, sizeof(bufferRecv) - 1, 0);
-    if(bytesRecv > 0){
-        std::cout << "Bytes recieved: " << bytesRecv << std::endl;
-        std::cout << "Text recieved: \n{\n" << bufferRecv << "\n}" << std::endl;
-        bufferRecv[bytesRecv] = '\0';
-        req.Parse(bufferRecv);
-        HandleRequest();
-        if(!Send()){
-            return false;
+    char bufferRecv[8192] = {0};
+    
+    do{ // headers
+        bytesRecv = recv(clientSocket, bufferRecv, sizeof(bufferRecv) - 1, 0);
+        if(bytesRecv > 0){
+            bufferRecv[bytesRecv] = '\0';
+            req.fullRequest += bufferRecv;
+            std::cout << "Chunk received: " << bytesRecv << " bytes" << std::endl;
+        }
+    } while(bytesRecv > 0 && req.fullRequest.find("\r\n\r\n") == std::string::npos);
+    
+
+    size_t headersEnd = req.fullRequest.find("\r\n\r\n");
+    std::string headers = req.fullRequest.substr(0, headersEnd);
+    
+    size_t contentLength = 0;
+    size_t clPos = headers.find("Content-Length: ");
+    if (clPos != std::string::npos) {
+        size_t clEnd = headers.find("\r\n", clPos);
+        std::string clStr = headers.substr(clPos + 16, clEnd - (clPos + 16));
+        contentLength = std::stoi(clStr);
+    }
+
+    size_t expectedTotal = headersEnd + 4 + contentLength;
+    while (req.fullRequest.length() < expectedTotal) {
+        bytesRecv = recv(clientSocket, bufferRecv, sizeof(bufferRecv) - 1, 0);
+        if (bytesRecv > 0) {
+            bufferRecv[bytesRecv] = '\0';
+            req.fullRequest += bufferRecv;
+            std::cout << "Body chunk received: " << bytesRecv << " bytes" << std::endl;
+        } else {
+            break;
         }
     }
+
+    std::cout << "Total bytes recieved: " << req.fullRequest.length() << std::endl;
+    std::cout << "Expected: " << expectedTotal << std::endl;
+    std::cout << "Full text recieved: \n{\n" << req.fullRequest << "\n}" << std::endl;
+    req.Parse(req.fullRequest.c_str());
+    HandleRequest();
+    if(!Send()){
+        return false;
+    }
+
     return true;
 }
 
@@ -227,32 +259,6 @@ void Server::HandleRequest(){
 
 void Server::SendCorsRes(){
 
-}
-
-const char* Server::BuildResponse(
-    const char* body,
-    const char* status,
-    const char* type,
-    const char* cors
-) {
-    
-    memset(resBuffer, 0, sizeof(resBuffer));
-    snprintf(resBuffer, sizeof(resBuffer),
-        "HTTP/1.1 %s\r\n"
-        "Content-Type: %s\r\n"
-        "Access-Control-Allow-Origin: %s\r\n"
-        "Content-Length: %d"
-        "\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "%s",
-        status,
-        type,
-        cors,
-        strlen(body),
-        body
-    );
-    return resBuffer;
 }
 
 void Server::Post(const std::string& path, std::function<void()> handler){
