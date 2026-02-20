@@ -6,6 +6,15 @@
     <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
+    <div class="options-container">
+        <div class="general">
+            <button id="bntSave">Zapisz</button>
+        </div>
+        <div class="toolbar" id="toolbar">
+            <button id="toolErase">Gumka</button>
+            <button id="toolDraw">Pędzel</button>
+        </div>
+    </div>
     <div class="main-workspace">
         <div class="tileset-container">
             <canvas id="tileset"></canvas>
@@ -14,8 +23,8 @@
             <canvas id="map"></canvas>
         </div>
     </div>
-    <button id="bntSave">Zapisz</button>
     
+    <script src="src/js/Tools.js"></script>
     <script src="src/js/Map.js"></script>
     <script src="src/js/Utils.js"></script>
     <script src="src/js/Tileset.js"></script>

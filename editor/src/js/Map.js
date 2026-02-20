@@ -17,6 +17,8 @@ class Map {
             y: -1,
         }
 
+        this.toolbox = new Tools;
+
         this.init(ctxID);
     }
 
@@ -39,7 +41,9 @@ class Map {
             if(this.map.tilesetUsed){
                 const targetRow = Math.round(this.hover.y / this.tileSize);
                 const targetTile = Math.round(this.hover.x / this.tileSize);
-                const tilesetPos = this.map.tilesetUsed.getSelectedPos();
+                const tilesetPos = this.toolbox.activeTool == 'Erase' 
+                    ? { x: -1, y: -1 } : this.map.tilesetUsed.getSelectedPos();
+                    
                 this.tiles[targetRow][targetTile][0] = tilesetPos.x;
                 this.tiles[targetRow][targetTile][1] = tilesetPos.y;
             }
