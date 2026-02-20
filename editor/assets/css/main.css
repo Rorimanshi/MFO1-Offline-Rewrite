@@ -26,11 +26,11 @@ a {
     
     border: 1px solid darkgreen;
 
-    min-width: 244px;
+    min-width: 210px;
     height: 100%;
     max-height: 640px;
 
-    overflow: scroll;
+    overflow-y: scroll;
 }
 
 .map-container{

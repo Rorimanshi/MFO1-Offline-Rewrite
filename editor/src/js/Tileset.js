@@ -34,6 +34,7 @@ class Tileset {
 
         this.handle.addEventListener('mousemove', e => {
             const pos = this.getGridPos(e);
+            if(pos.x >= this.tileSize*6 || pos.y >= this.tileset.height) return;
             this.hover.x = pos.x;
             this.hover.y = pos.y;
             //console.log(`x: ${this.hover.x}, y: ${this.hover.y}`)
