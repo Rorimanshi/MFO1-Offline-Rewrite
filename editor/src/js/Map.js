@@ -81,8 +81,8 @@ class Map {
             const tilesetPos = this.toolbox.activeTool == 'Erase' 
                 ? { x: -1, y: -1 } : this.map.tilesetUsed.getSelectedPos();
                 
-            this.tiles[targetRow][targetTile][0] = tilesetPos.x;
-            this.tiles[targetRow][targetTile][1] = tilesetPos.y;
+            this.tiles[targetRow][targetTile][0] = Math.floor(tilesetPos.x / this.tileSize);
+            this.tiles[targetRow][targetTile][1] = Math.floor(tilesetPos.y / this.tileSize);
         }
     }
 
@@ -153,7 +153,7 @@ class Map {
                 }
                 this.ctx.drawImage(
                     this.map.tilesetImgUsed,
-                    targetX, targetY,
+                    targetX * this.tileSize, targetY * this.tileSize,
                     this.tileSize, this.tileSize,
                     tileNum * this.tileSize, rowNum * this.tileSize,
                     this.tileSize, this.tileSize
