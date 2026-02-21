@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html{
+    font-size: 10px;
+    font-family:'Verdana';
+    font-weight: bold;
+}
+body{
+    background-color: rgb(181,181,204);
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.viewport{
+    width: fit-content;
+
+    margin: auto;
+    margin-top: 40px;
+}
+
+#game{
+
+    border: 1px solid black;
+
+    width: 224px;
+    height: 224px;
+}
