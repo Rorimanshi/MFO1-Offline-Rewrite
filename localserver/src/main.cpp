@@ -4,12 +4,13 @@
 
 int main(){
     httpserv::Server server;
-
+    u_short port = 27015;
+    
     if(server.getLastErrorMsg() != ""){
         return 1;
     }
-
-    if(!server.Listen(27015)){
+    
+    if(!server.Listen(port)){
         std::cout << server.getLastErrorMsg() << std::endl;
         return 1;
     }

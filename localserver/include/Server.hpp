@@ -50,7 +50,7 @@ public:
 public:
     Server();
     
-    bool Listen(const u_short port, const char* addr = "127.0.0.1");
+    bool Listen(u_short& port, const char* addr = "127.0.0.1");
     bool Accept();
     bool Send();
     

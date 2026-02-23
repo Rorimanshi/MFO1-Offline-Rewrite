@@ -110,7 +110,7 @@ Server::Server(){
     InitSocketAPI();
 }
 
-bool Server::Listen(const u_short port, const char* addr){
+bool Server::Listen(u_short& port, const char* addr){
     mainSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(mainSocket == INVALID_SOCKET){
         lastErrorMsg = "Failed to create a socket!";
@@ -119,12 +119,24 @@ bool Server::Listen(const u_short port, const char* addr){
     }
     service.sin_family = AF_INET;
     service.sin_addr.s_addr = inet_addr(addr);
-    service.sin_port = htons(port);
 
-    if(bind(mainSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR){
-        lastErrorMsg = "Socket binding failed!";
-        std::cout << lastErrorMsg;
-        return false;
+    const int maxAttempts = 50;
+    bool bound = false;
+
+    for(int i = 0; i < maxAttempts; i++){
+        u_short currentPort = port + i;
+        service.sin_port = htons(currentPort);
+
+        if(bind(mainSocket, (SOCKADDR*)&service, sizeof(service)) != SOCKET_ERROR){
+            port = currentPort;
+            bound = true;
+            break;
+        }
+        if(WSAGetLastError() != WSAEADDRINUSE){
+            lastErrorMsg = "Socket binding failed with unexpected error!";
+            std::cout << lastErrorMsg << std::endl;
+            return false;
+        }
     }
 
     if(listen(mainSocket, 1) == SOCKET_ERROR){
@@ -132,7 +144,8 @@ bool Server::Listen(const u_short port, const char* addr){
         std::cout << lastErrorMsg;
         return false;
     }
-
+    
+    std::cout << "Listening on port " << port << std::endl;
     return true;
 }
 
