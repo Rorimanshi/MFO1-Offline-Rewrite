@@ -25,6 +25,7 @@ class Player {
             'down-right': [1, 1],
             'none': [0, 0]
         }
+        this.speed = 100;
 
         this.initListeners();
     }
@@ -43,22 +44,27 @@ class Player {
     move(dir){
         if(this.moving) return;
         this.direction = dir;
-        this.moving = 32;
+        this.moving = this.tileSize;
     }
 
-    update(){
-        if(this.moving){
+    update(deltaTime){
+        if(this.moving > 0){
             const [xModif, yModif] = this.directionUpdate[this.direction];
+            let distanceToMove = this.speed * (deltaTime / 1000);
             
-            this.posModif.x += xModif;
-            this.posModif.y += yModif;
-            this.moving--;
+            if (distanceToMove > this.moving) {
+                distanceToMove = this.moving;
+            }
+            this.posModif.x += xModif * distanceToMove;
+            this.posModif.y += yModif * distanceToMove;
 
-            if(!this.moving){
+            this.moving -= distanceToMove;
+            if(this.moving <= 0){
                 this.posTile.x += xModif;
                 this.posTile.y += yModif;
                 this.posModif.x = 0;
                 this.posModif.y = 0;
+                this.moving = 0;
             }
         }
         

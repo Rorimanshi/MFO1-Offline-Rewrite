@@ -16,19 +16,26 @@ const map = new Map(player);
 
 const importer = new FileImporter(map, player);
 
-function gameLoop(){
+
+let lastTime = 0;
+function gameLoop(timestamp){
+    if(!lastTime) lastTime = timestamp;
+    
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
     ctx.clearRect(0, 0, WND_WIDTH, WND_HEIGHT);
-    ctx.fillRect(pos.x, pos.y, 10, 10);
+
     map.draw(ctx);
 
-    player.update();
+    player.update(deltaTime);
     player.draw();
     
     requestAnimationFrame(gameLoop);
 }
 let inte = setInterval(() => {
     if(importer.done){
-        gameLoop();
+        requestAnimationFrame(gameLoop);
         clearInterval(inte)
     }
 }, 100)
