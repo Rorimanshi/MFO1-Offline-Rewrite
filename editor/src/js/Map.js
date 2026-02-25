@@ -18,6 +18,7 @@ class Map {
         }
 
         this.toolbox = new Tools;
+        this.editionOptions = new Edition;
         this.mousedrag = false;
 
         this.init(ctxID);
@@ -54,7 +55,7 @@ class Map {
         for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
             const newRow = [];
             for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
-                newRow.push([-1, -1]);
+                newRow.push([-1, -1, false]);
             }
             this.tiles.push(newRow);
         }
@@ -66,7 +67,7 @@ class Map {
         for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
             const newRow = [];
             for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
-                const targetTile = this.tiles[rowNum]?.[tileNum] || [-1,-1];
+                const targetTile = this.tiles[rowNum]?.[tileNum] || [-1,-1, false];
                 newRow.push([targetTile[0], targetTile[1]]);
             }
             newTiles.push(newRow);
@@ -78,6 +79,13 @@ class Map {
         if(this.map.tilesetUsed){
             const targetRow = Math.round(this.hover.y / this.tileSize);
             const targetTile = Math.round(this.hover.x / this.tileSize);
+            console.log(this.editionOptions.activeOption == 'Collision')
+            if(this.editionOptions.activeOption == 'Collision'){
+                const isErasing = this.toolbox.activeTool == 'Erase';
+                this.tiles[targetRow][targetTile][2] = !isErasing;
+                return;
+            }
+
             const tilesetPos = this.toolbox.activeTool == 'Erase' 
                 ? { x: -1, y: -1 } : this.map.tilesetUsed.getSelectedPos();
                 
@@ -158,7 +166,24 @@ class Map {
                     tileNum * this.tileSize, rowNum * this.tileSize,
                     this.tileSize, this.tileSize
                 );
+                if(this.editionOptions.activeOption == 'Collision'){
+                    const collision = this.tiles[rowNum][tileNum][2];
+                    if(collision){
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(tileNum * this.tileSize, rowNum * this.tileSize);
+                        this.ctx.lineTo(tileNum * this.tileSize + this.tileSize, rowNum * this.tileSize + this.tileSize);
+                        this.ctx.moveTo(tileNum * this.tileSize + this.tileSize, rowNum * this.tileSize);
+                        this.ctx.lineTo(tileNum * this.tileSize, rowNum * this.tileSize + this.tileSize);
+                        this.ctx.stroke();
+                    }
+                }
             }
+        }
+        if(this.editionOptions.activeOption == 'Collision'){
+            this.ctx.fillStyle = 'rgba(50,50,50,0.25)';
+            this.ctx.fillRect(0,0,this.handle.width, this.handle.height);
+            this.ctx.fillStyle = 'black';
         }
         this.drawSelection(this.hover, 'rgb(0,0,0)', 2  );
     }

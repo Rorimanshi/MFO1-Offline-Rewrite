@@ -56,3 +56,58 @@ class Tools {
         Object.entries(this.tools).forEach(([key, val]) => { console.log(key); console.log(val); });
     }
 }
+
+class Edition {
+    constructor(){
+        this.options = {};
+        this.activeOption = 'default';
+
+        this.InitOptions();
+        this.setListeners();
+    }
+
+    InitOptions(){
+        const optionsHandle = document.getElementById('edition');
+        if(!optionsHandle){
+            console.log(`Could not find edition option element!`);
+            return;
+        }
+        const options = optionsHandle.querySelectorAll('button');
+        options.forEach(optionHandle => {
+            const prefix = optionHandle.id.substr(0,3);
+            if(prefix != 'opt'){
+                console.log('Element that is not edition option detected in options!');
+                return;
+            }
+            const optionName = optionHandle.id.substr(3);
+            if(!optionName.length){
+                console.log('Unnamed option in options!');
+                return;
+            }
+            this.options[optionName] = {
+                handle: optionHandle
+            };
+        });
+    }
+
+    setListeners(){
+        Object.entries(this.options).forEach(([key,val]) => {
+            console.log(val);
+            if(val.handle._hasListener) return;
+            val.handle.addEventListener('click', e => {
+                if(e.target.classList.contains('selected')){
+                    e.target.classList.remove('selected');
+                    this.activeOption = 'default';
+                }
+                else{
+                    Object.values(this.options).forEach(option => {
+                        option.handle.classList.remove('selected');
+                    });
+                    e.target.classList.add('selected');
+                    this.activeOption = key;
+                }
+                
+            });
+        });
+    }
+}
