@@ -17,8 +17,7 @@ class Map {
             y: -1,
         }
 
-        this.toolbox = new Tools;
-        this.editionOptions = new Edition;
+        this.options = new Options;
         this.mousedrag = false;
 
         this.init(ctxID);
@@ -44,7 +43,7 @@ class Map {
         });
         this.handle.addEventListener('mousemove', e => {
             this.updateSelection(e);
-            if(this.mousedrag && this.toolbox.activeTool == 'Brush') this.placeTile();
+            if(this.mousedrag && this.options.tools.active == 'Brush') this.placeTile();
         });
         this.handle.addEventListener('click', e => {
             this.placeTile();
@@ -79,14 +78,14 @@ class Map {
         if(this.map.tilesetUsed){
             const targetRow = Math.round(this.hover.y / this.tileSize);
             const targetTile = Math.round(this.hover.x / this.tileSize);
-            console.log(this.editionOptions.activeOption == 'Collision')
-            if(this.editionOptions.activeOption == 'Collision'){
-                const isErasing = this.toolbox.activeTool == 'Erase';
-                this.tiles[targetRow][targetTile][2] = !isErasing;
+            console.log(this.options.tools.active == 'Collision')
+            if(this.options.tools.active == 'Collision'){
+                const currentCollision = this.tiles[targetRow][targetTile][2];
+                this.tiles[targetRow][targetTile][2] = !currentCollision;
                 return;
             }
 
-            const tilesetPos = this.toolbox.activeTool == 'Erase' 
+            const tilesetPos = this.options.tools.active == 'Erase' 
                 ? { x: -1, y: -1 } : this.map.tilesetUsed.getSelectedPos();
                 
             this.tiles[targetRow][targetTile][0] = Math.floor(tilesetPos.x / this.tileSize);
@@ -156,36 +155,33 @@ class Map {
             for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
                 const targetX = this.tiles[rowNum][tileNum][0];
                 const targetY = this.tiles[rowNum][tileNum][1];
-                if(targetX < 0 || targetY < 0){
-                    continue;
+                if(targetX >= 0 || targetY >= 0){
+                    this.drawTile(targetX, targetY, tileNum, rowNum);
                 }
-                this.ctx.drawImage(
-                    this.map.tilesetImgUsed,
-                    targetX * this.tileSize, targetY * this.tileSize,
-                    this.tileSize, this.tileSize,
-                    tileNum * this.tileSize, rowNum * this.tileSize,
-                    this.tileSize, this.tileSize
-                );
-                if(this.editionOptions.activeOption == 'Collision'){
+                if(this.options.tools.active == 'Collision'){
                     const collision = this.tiles[rowNum][tileNum][2];
                     if(collision){
-                        this.ctx.lineWidth = 2;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(tileNum * this.tileSize, rowNum * this.tileSize);
-                        this.ctx.lineTo(tileNum * this.tileSize + this.tileSize, rowNum * this.tileSize + this.tileSize);
-                        this.ctx.moveTo(tileNum * this.tileSize + this.tileSize, rowNum * this.tileSize);
-                        this.ctx.lineTo(tileNum * this.tileSize, rowNum * this.tileSize + this.tileSize);
-                        this.ctx.stroke();
+                        this.drawCollision(tileNum * this.tileSize, rowNum * this.tileSize, 'black', 2);
                     }
                 }
             }
         }
-        if(this.editionOptions.activeOption == 'Collision'){
+        if(this.options.tools.active == 'Collision'){
             this.ctx.fillStyle = 'rgba(50,50,50,0.25)';
             this.ctx.fillRect(0,0,this.handle.width, this.handle.height);
             this.ctx.fillStyle = 'black';
         }
-        this.drawSelection(this.hover, 'rgb(0,0,0)', 2  );
+        this.drawSelection(this.hover, 'black', 2  );
+    }
+
+    drawTile(targetX, targetY, tileNum, rowNum){
+        this.ctx.drawImage(
+            this.map.tilesetImgUsed,
+            targetX * this.tileSize, targetY * this.tileSize,
+            this.tileSize, this.tileSize,
+            tileNum * this.tileSize, rowNum * this.tileSize,
+            this.tileSize, this.tileSize
+        );
     }
 
     drawSelection(rect, color, lineWidth){
@@ -194,6 +190,17 @@ class Map {
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = lineWidth;
         this.ctx.strokeRect(rect.x, rect.y, this.tileSize, this.tileSize);
+    }
+
+    drawCollision(x, y, color, lineWidth){
+        this.strokeStyle = color;
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.lineTo(x + this.tileSize, y + this.tileSize);
+        this.ctx.moveTo(x + this.tileSize, y);
+        this.ctx.lineTo(x, y + this.tileSize);
+        this.ctx.stroke();
     }
 
 }
