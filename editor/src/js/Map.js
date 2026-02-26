@@ -4,7 +4,10 @@ class Map {
         this.handle = null;
         this.ctx = null;
 
-        this.tiles = [];
+        this.data = {
+            tiles: [[],[]],
+            collision: []
+        }
         this.map = {
             tilesetUsed: null,
             tilesetImgUsed: null,
@@ -51,27 +54,47 @@ class Map {
     }
 
     initTiles(){
-        for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
-            const newRow = [];
-            for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
-                newRow.push([-1, -1, false]);
+        for(let layer = 0; layer < 2; layer++){
+            for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
+                const newTilesRow = [];
+                const newCollisionRow = [];
+                for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
+                    newTilesRow.push([-1, -1]);
+                    if(layer == 0) newCollisionRow.push(false);
+                }
+                this.data.tiles[layer].push(newTilesRow);
+                if(layer == 0) this.data.collision.push(newCollisionRow);
             }
-            this.tiles.push(newRow);
+            console.log(this.data.tiles[layer]);
         }
-        console.log(this.tiles);
+        
     }
 
     resizeTiles(){
         const newTiles = [];
-        for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
-            const newRow = [];
-            for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
-                const targetTile = this.tiles[rowNum]?.[tileNum] || [-1,-1, false];
-                newRow.push([targetTile[0], targetTile[1]]);
+        const newCollision = [];
+        for(let layer = 0; layer < 2; layer++){
+            const newLayer = [];
+            for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
+                const newTilesRow = [];
+                const newCollisionRow = [];
+                for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
+                    const targetTile = this.data.tiles[layer][rowNum]?.[tileNum] || [-1,-1];
+                    newTilesRow.push([targetTile[0], targetTile[1]]);
+                    if(layer == 0){
+                        const targetCollision = this.data.collision[rowNum]?.[tileNum] || false;
+                        newCollisionRow.push(targetCollision);
+                    }
+                }
+                newLayer.push(newTilesRow);
+                if(layer == 0) newCollision.push(newCollisionRow);
             }
-            newTiles.push(newRow);
+            newTiles.push(newLayer);
         }
-        this.tiles = newTiles;
+        
+        this.data.tiles = newTiles;
+        console.log(this.data.tiles)
+        this.data.collision = newCollision;
     }
 
     placeTile(){
@@ -80,16 +103,16 @@ class Map {
             const targetTile = Math.round(this.hover.x / this.tileSize);
             console.log(this.options.tools.active == 'Collision')
             if(this.options.tools.active == 'Collision'){
-                const currentCollision = this.tiles[targetRow][targetTile][2];
-                this.tiles[targetRow][targetTile][2] = !currentCollision;
+                const currentCollision = this.data.collision[targetRow][targetTile];
+                this.data.collision[targetRow][targetTile] = !currentCollision;
                 return;
             }
 
             const tilesetPos = this.options.tools.active == 'Erase' 
                 ? { x: -1, y: -1 } : this.map.tilesetUsed.getSelectedPos();
                 
-            this.tiles[targetRow][targetTile][0] = Math.floor(tilesetPos.x / this.tileSize);
-            this.tiles[targetRow][targetTile][1] = Math.floor(tilesetPos.y / this.tileSize);
+            this.data.tiles[this.options.layers.active][targetRow][targetTile][0] = Math.floor(tilesetPos.x / this.tileSize);
+            this.data.tiles[this.options.layers.active][targetRow][targetTile][1] = Math.floor(tilesetPos.y / this.tileSize);
         }
     }
 
@@ -102,8 +125,8 @@ class Map {
 
     exportMap(){
         return {
-            name: 'map name',
-            tiles: this.tiles
+            tiles: this.data.tiles,
+            collision: this.data.collision
         };
     }
 
@@ -126,7 +149,8 @@ class Map {
         this.map.heightInTiles = heightInTiles;
         console.log(`Map size set to ${this.handle.width}x${this.handle.height}`);
 
-        if(!this.tiles.length){
+        if(!this.data.tiles[0].length || !this.data.tiles[1].length){
+            console.log('init tiles')
             this.initTiles();
         }
         else{
@@ -151,27 +175,33 @@ class Map {
     draw(){
         if(!this.map.tilesetImgUsed) return;
         this.ctx.clearRect(0,0,this.handle.width,this.handle.height);
+        this.drawLayer(0);
+        if(this.options.layers.active == 1){
+            this.drawMapShade('rgba(50,50,50,0.5)');
+        }
+        this.drawLayer(1);
+        if(this.options.tools.active == 'Collision'){
+            this.drawMapShade('rgba(50,50,50,0.25)');
+        }
+        this.drawSelection(this.hover, 'black', 2  );
+    }
+
+    drawLayer(layer){
         for(let rowNum = 0; rowNum < this.map.heightInTiles; rowNum++){
             for(let tileNum = 0; tileNum < this.map.widthInTiles; tileNum++){
-                const targetX = this.tiles[rowNum][tileNum][0];
-                const targetY = this.tiles[rowNum][tileNum][1];
+                const targetX = this.data.tiles[layer][rowNum][tileNum][0];
+                const targetY = this.data.tiles[layer][rowNum][tileNum][1];
                 if(targetX >= 0 || targetY >= 0){
                     this.drawTile(targetX, targetY, tileNum, rowNum);
                 }
-                if(this.options.tools.active == 'Collision'){
-                    const collision = this.tiles[rowNum][tileNum][2];
+                if(layer == 1 && this.options.tools.active == 'Collision'){
+                    const collision = this.data.collision[rowNum][tileNum];
                     if(collision){
                         this.drawCollision(tileNum * this.tileSize, rowNum * this.tileSize, 'black', 2);
                     }
                 }
             }
         }
-        if(this.options.tools.active == 'Collision'){
-            this.ctx.fillStyle = 'rgba(50,50,50,0.25)';
-            this.ctx.fillRect(0,0,this.handle.width, this.handle.height);
-            this.ctx.fillStyle = 'black';
-        }
-        this.drawSelection(this.hover, 'black', 2  );
     }
 
     drawTile(targetX, targetY, tileNum, rowNum){
@@ -201,6 +231,12 @@ class Map {
         this.ctx.moveTo(x + this.tileSize, y);
         this.ctx.lineTo(x, y + this.tileSize);
         this.ctx.stroke();
+    }
+
+    drawMapShade(color){
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(0,0,this.handle.width, this.handle.height);
+        this.ctx.fillStyle = 'black';
     }
 
 }

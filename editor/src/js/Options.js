@@ -6,7 +6,7 @@ class Options {
         };
         this.layers = {
             available: {},
-            active: 'default'
+            active: 0
         };
         this.initOptions(this.tools, 'optTools', 't');
         this.initOptions(this.layers, 'optLayers', 'l');
@@ -45,14 +45,24 @@ class Options {
             val.handle.addEventListener('click', e => {
                 if(e.target.classList.contains('selected')){
                     e.target.classList.remove('selected');
-                    obj.active = 'default';
+                    if(key.substr(0,5) == 'Layer'){
+                        obj.active = 0;
+                    }
+                    else{
+                        obj.active = 'default';
+                    }
                 }
                 else{
                     Object.values(obj.available).forEach(option => {
                         option.handle.classList.remove('selected');
                     });
                     e.target.classList.add('selected');
-                    obj.active = key;
+                    if(key.substr(0,5) == 'Layer'){
+                        obj.active = Number(key.substr(5));
+                    }
+                    else{
+                        obj.active = key;
+                    }
                 }
                 
             });
