@@ -35,6 +35,7 @@ function gameLoop(timestamp){
 }
 let inte = setInterval(() => {
     if(importer.done){
+        player.importCollisionArr(map.data.collision);
         requestAnimationFrame(gameLoop);
         clearInterval(inte)
     }

@@ -18,11 +18,11 @@ class FileImporter {
 
     async importMapInfo(){
         try{
-            const res = await fetch('../assets/maps/savefile.json');
+            const res = await fetch('../saves/savefile.json');
             const mapInfo = await res.json();
-            this.map.name = mapInfo.name;
-            this.map.tiles = mapInfo.tiles;
-
+            this.map.data.tiles = mapInfo.map.tiles;
+            this.map.data.collision = mapInfo.map.collision;
+            
             return true;
         } catch(err){
             console.log('importMapInfo failed: ', err);

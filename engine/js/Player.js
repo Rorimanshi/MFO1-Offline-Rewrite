@@ -5,8 +5,8 @@ class Player {
         this.spriteImg = null;
 
         this.posTile = {
-            x: 10,
-            y: 10
+            x: 0,
+            y: 0
         };
         this.posModif = {
             x: 0,
@@ -27,6 +27,8 @@ class Player {
         }
         this.speed = 100;
 
+        this.mapCollisions = [];
+
         this.initListeners();
     }
 
@@ -42,9 +44,18 @@ class Player {
     }
 
     move(dir){
-        if(this.moving) return;
+        if(this.moving || !this.isMovePossible(dir)) return;
         this.direction = dir;
         this.moving = this.tileSize;
+    }
+
+    isMovePossible(dir){
+        const [xModif, yModif] = this.directionUpdate[dir];
+        const [xTarget, yTarget] = [xModif + this.posTile.x, yModif + this.posTile.y];
+        if(xTarget < 0 || yTarget < 0 || this.mapCollisions[yTarget][xTarget]){
+            return false;
+        }
+        return true;
     }
 
     update(deltaTime){
@@ -69,6 +80,10 @@ class Player {
         }
         
 
+    }
+
+    importCollisionArr(collisionArr){
+        this.mapCollisions = collisionArr;
     }
 
     draw(){
