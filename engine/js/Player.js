@@ -5,8 +5,8 @@ class Player {
         this.spriteImg = null;
 
         this.posTile = {
-            x: 0,
-            y: 0
+            x: 10,
+            y: 10
         };
         this.posModif = {
             x: 0,
@@ -28,6 +28,11 @@ class Player {
         this.speed = 100;
 
         this.mapCollisions = [];
+
+        this.DOMHandles = {
+            coords: document.getElementById('coords')
+        };
+        coords.innerText = `[${this.posTile.x}, ${this.posTile.y}]`;
 
         this.initListeners();
     }
@@ -76,6 +81,7 @@ class Player {
                 this.posModif.x = 0;
                 this.posModif.y = 0;
                 this.moving = 0;
+                this.DOMHandles.coords.innerText = `[${this.posTile.x}, ${this.posTile.y}]`;
             }
         }
         
